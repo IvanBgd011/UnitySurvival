@@ -6,114 +6,63 @@ using UnityEditor;
 
 public class TileAutomata : MonoBehaviour
 {
-    [Range(0, 100)]
-    public int iniChance;
-
-    [Range(1, 8)]
-    public int birthLimit;
-
-    [Range(1, 8)]
-    public int deathLimit;
-
-    [Range(1, 10)]
-    public int numR;
-    private int count = 0;
-
+    public int seed;
     private int[,] terrainMap;
+    private int[,] terrainMapNext;
+    private int[,] chunks;
     public Vector3Int tmapSize;
 
 
     public Tilemap topMap;
     public Tilemap botMap;
+    public Tilemap ForestMap;
     public Tile topTile;
     public Tile botTile;
+    public Tile ForestTile;
 
     int width;
     int height;
 
     private void Start()
     {
-        doSim(numR);
+        doSim();
     }
-    public void doSim(int numR)
+    public void doSim()
     {
-        clearMap(false);
         width = tmapSize.x;
         height = tmapSize.y;
 
-        if(terrainMap == null)
+        if (terrainMap == null)
         {
             terrainMap = new int[width, height];
             initPos();
-;        }
-
-        for(int i = 0; i< numR; i++)
-        {
-            terrainMap = genTilePos(terrainMap);
         }
 
         for(int x = 0; x < width; x++)
         {
             for(int y = 0; y < height; y++)
             {
-                if (terrainMap[x, y] == 1)
-                    topMap.SetTile(new Vector3Int(-x + width / 2, -y + height / 2, 0), topTile);
-                if(terrainMap[x, y] != 1)
+                if(terrainMap[x,y] == 0)
+                {
                     botMap.SetTile(new Vector3Int(-x + width / 2, -y + height / 2, 0), botTile);
+                }
+                if (terrainMap[x, y] == 1)
+                {
+                    topMap.SetTile(new Vector3Int(-x + width / 2, -y + height / 2, 0), topTile);
+
+                }
+                if (terrainMap[x, y] == 2)
+                {
+                    ForestMap.SetTile(new Vector3Int(-x + width / 2, -y + height / 2, 0), ForestTile);
+                }
+
+
             }
         }
 
     }
 
-    public int[,] genTilePos(int[,] oldMap)
-    {
-        int[,] newMap = new int[width, height];
-        int neighb;
-        BoundsInt my8 = new BoundsInt(-1, -1, 0, 3, 3, 1);
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                neighb = 0;
-                foreach (var b in my8.allPositionsWithin)
-                {
-                    if (b.x == 0 && b.y == 0) continue;
-                    if(x+b.x >= 0 && x+b.x < width && y+b.y >= 0 && y+b.y < height)
-                    {
-                        neighb += oldMap[x + b.x, y + b.y];
-                    }
-                    else
-                    {
-                        neighb++;
-                    }
-
-                }
-
-                if(oldMap[x,y] == 1)
-                {
-                    if (neighb < deathLimit) newMap[x, y] = 0;
-                    else
-                    {
-                        newMap[x, y] = 1;
-                    }
-                }
-
-                if (oldMap[x, y] == 0)
-                {
-                    if (neighb > birthLimit) newMap[x, y] = 1;
-                    else
-                    {
-                        newMap[x, y] = 0;
-                    }
-                }
-            }
-        }
-
-
-
-        return newMap;
-    }
+ 
 
     public void initPos()
     {
@@ -121,25 +70,35 @@ public class TileAutomata : MonoBehaviour
         {
             for(int y = 0; y<height; y++)
             {
-                terrainMap[x, y] = Random.Range(1, 101) < iniChance ? 1 : 0;
+                float xC = (float)x / width *15;
+                float yC = (float)y / height * 15;
+                float noise = Mathf.PerlinNoise(seed + xC, seed +yC);
+                if (noise <= 0.4)
+                {
+                    terrainMap[x, y] = 0;
+                }
+                if(noise >0.4)
+                {
+                    terrainMap[x, y] = 1;
+                }
+
             }
         }
-    }
 
-/*    public void clean()
-    {
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                if
+                float xC = (float)x / width * 20;
+                float yC = (float)y / height * 20;
+                float noise = Mathf.PerlinNoise(seed +xC, seed +yC);
+                if (noise <= 0.3 && terrainMap[x,y] == 1)
+                {
+                    terrainMap[x, y] = 2;
+                }
+
             }
         }
-    }*/
-
-    private void Update()
-    {
-        
     }
 
     public void clearMap(bool complete)
