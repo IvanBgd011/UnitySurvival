@@ -1,8 +1,6 @@
 Plans:
 hard stuff:
-    fix world generation, possibilities:
-    1.perlin noise
-    2.use current tile system as chunks
+    chunk system
 
   enemy pathfind
     1.using tile system
